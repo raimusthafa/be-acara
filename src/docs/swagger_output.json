@@ -106,6 +106,37 @@
           }
         ]
       }
+    },
+    "/auth/activation": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest"
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
