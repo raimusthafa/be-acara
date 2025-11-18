@@ -4,6 +4,7 @@ import UserModel from "../models/user.model";
 import { encrypt } from "../utils/encryption";
 import { generateToken } from "../utils/jwt";
 import { iReqUser } from "../middleware/auth.middleware";
+import { userInfo } from "os";
 
 type TRegister = {
   fullname: string;
@@ -22,7 +23,22 @@ const registerValidationSchema = Yup.object({
   fullname: Yup.string().required(),
   username: Yup.string().required(),
   email: Yup.string().email().required(),
-  password: Yup.string().required(),
+  password: Yup.string().required().min(6, "Password must be at least be 6 character")
+  .test('at-least-one-uppercase-letter', 'Contains at least one uppercase letter',
+    (value) => {
+      if (!value) return false;
+      const regex = /^(?=.*[A-Z])/;
+      return regex.test(value);
+    }
+  )
+
+  .test('at-least-one-uppercase-number', 'Contains at least one number',
+    (value) => {
+      if (!value) return false;
+      const regex = /^(?=.*\d)/;
+      return regex.test(value);
+    }
+  ),
   confirmPassword: Yup.string()
     .required()
     .oneOf([Yup.ref("password"), ""], "Passwords do not match"),
@@ -81,6 +97,7 @@ export default {
             username: identifier,
           },
         ],
+        isActive: true,
       });
       if (!userByIndentifier) {
         return res.status(403).json({
@@ -127,6 +144,40 @@ export default {
      });
     } catch (error) {
       const err = error as unknown as Error;
+        res.status(400).json({
+        massage: err.message,
+        data: null,
+      });
+    }
+  },
+  async activation (req: Request, res:Response) {
+    /**
+     #swagger.tags = ['Auth']
+     #swagger.requestBody = {
+     required: true,
+     schema: {$ref: '#/component/schemas/ActivationRequest'}
+     }
+     */
+    try {
+      const {code} = req.body as { code: string };
+      const user = await UserModel.findOneAndUpdate(
+      {
+        activationCode: code,
+
+      }, 
+      {
+        isActive: true,
+      }, 
+      {
+        new: true,
+      }
+    );
+    res.status(200).json({
+      massage: "User successfully activated",
+      data: user,
+    })
+    } catch (error) {
+       const err = error as unknown as Error;
         res.status(400).json({
         massage: err.message,
         data: null,
